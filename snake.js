@@ -198,6 +198,9 @@
         snake.segments = [{ x: 0, y: 0 }];
         score = 0;
         speed = 450;
+        apple.move();
+        dynamite.move();
+        dynamite2.move();
         gameOver = false;
         clearTimeout(timeout);
         direction = 'ArrowRight'
