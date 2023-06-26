@@ -17,7 +17,7 @@
     const crunchSound = document.querySelector('#crunch');
 
     let gameOver = false;
-    let speed = 500;
+    let speed = 450;
     let score = 0;
 
     class Snake {
@@ -29,8 +29,9 @@
         draw() {
             context.drawImage(snakeHead, this.segments[0].x, this.segments[0].y);
             for (let i = 1; i < this.segments.length; i++) {
-                context.fillStyle = '#5D951D';
-                context.fillRect(this.segments[i].x, this.segments[i].y, CELL_SIZE, CELL_SIZE);
+                //context.fillStyle = '#5D951D';
+                context.drawImage(snakeBody, this.segments[i].x, this.segments[i].y, CELL_SIZE, CELL_SIZE);
+                //context.fillRect(this.segments[i].x, this.segments[i].y, CELL_SIZE, CELL_SIZE);
             }
         }
 
@@ -65,6 +66,12 @@
                 gameOver = true;
             }
 
+            if (head.x === dynamite.x && head.y === dynamite.y) {
+                crashSound.currentTime = 0;
+                crashSound.play();
+                gameOver = true;
+            }
+
             if (!gameOver) {
                 pieceFormerlyKnownAsTail.x = x;
                 pieceFormerlyKnownAsTail.y = y;
@@ -73,10 +80,11 @@
                 if (head.x === apple.x && head.y === apple.y) {
                     this.segments.push({ x: tailX, y: tailY });
                     score++;
-                    speed = speed - (speed * 0.10);
+                    speed = speed - (speed * 0.15);
                     crunchSound.currentTime = 0;
                     crunchSound.play();
                     apple.move();
+                    dynamite.move();
                 }
             } else {
                 this.segments.push(pieceFormerlyKnownAsTail);
@@ -117,10 +125,26 @@
             return r - r % CELL_SIZE;
         }
     }
+    class Dynamite {
+        constructor() {
+            this.move();
+        }
+
+        draw() {
+            context.drawImage(dynamiteImg, this.x, this.y);
+        }
+
+        move() {
+            this.x = Apple.getRandomNumber(0, canvas.width - 1);
+            this.y = Apple.getRandomNumber(0, canvas.height - 1);
+            this.draw();
+        }
+    }
 
     function gameLoop() {
         context.clearRect(0, 0, canvas.width, canvas.height);
         apple.draw();
+        dynamite.draw();
         snake.move();
         context.font = 'bold 32px Arial';
         context.fillStyle = '#ff0000';
@@ -135,6 +159,19 @@
             context.fillText(`GAME OVER!!!`, (canvas.width / 2) - 80, (canvas.height / 2) - 16);
         }
     }
+    function restart() {
+        snake.segments = [{ x: 0, y: 0 }];
+        score = 0;
+        speed = 450;
+        gameOver = false;
+        direction = 'ArrowRight'
+        setTimeout(gameLoop, speed);
+    }
+
+    const restartBtn = document.querySelector('#restart');
+    restartBtn.addEventListener("click", restart);
+
+
 
     let direction = 'ArrowRight';
     document.addEventListener('keydown', e => {
@@ -173,14 +210,20 @@
 
     let snake;
     let apple;
+    let dynamite;
     let snakeHead;
     let appleImg;
+    let dynamiteImg;
+    let snakeBody
     try {
         const sp = loadImg('images/snakehead.png');
         const ap = loadImg('images/redapple.png');
-        [snakeHead, appleImg] = await Promise.all([sp, ap]);
+        const dp = loadImg('images/dynamite.png');
+        const sb = loadImg('images/snakebody.png');
+        [snakeHead, appleImg, dynamiteImg, snakeBody] = await Promise.all([sp, ap, dp, sb]);
         snake = new Snake();
         apple = new Apple();
+        dynamite = new Dynamite();
         setTimeout(gameLoop, speed);
     } catch (e) {
         console.error(e);
