@@ -29,9 +29,7 @@
         draw() {
             context.drawImage(snakeHead, this.segments[0].x, this.segments[0].y);
             for (let i = 1; i < this.segments.length; i++) {
-                //context.fillStyle = '#5D951D';
                 context.drawImage(snakeBody, this.segments[i].x, this.segments[i].y, CELL_SIZE, CELL_SIZE);
-                //context.fillRect(this.segments[i].x, this.segments[i].y, CELL_SIZE, CELL_SIZE);
             }
         }
 
@@ -71,6 +69,10 @@
                 crashSound.play();
                 gameOver = true;
             }
+            if (head.x === dynamite2.x && head.y === dynamite2.y) {
+                score -= 2;
+                dynamite2.move()
+            }
 
             if (!gameOver) {
                 pieceFormerlyKnownAsTail.x = x;
@@ -85,6 +87,7 @@
                     crunchSound.play();
                     apple.move();
                     dynamite.move();
+                    dynamite2.move();
                 }
             } else {
                 this.segments.push(pieceFormerlyKnownAsTail);
@@ -137,26 +140,58 @@
         move() {
             this.x = Apple.getRandomNumber(0, canvas.width - 1);
             this.y = Apple.getRandomNumber(0, canvas.height - 1);
-            this.draw();
+            if (apple.x !== this.x && apple.y !== this.y) {
+                this.draw();
+            }
+            else {
+                this.x = Apple.getRandomNumber(0, canvas.width - 1);
+                this.y = Apple.getRandomNumber(0, canvas.height - 1);
+                this.draw()
+            }
+
         }
     }
+    class Dynamite2 {
+        constructor() {
+            this.move();
+        }
+
+        draw() {
+            context.drawImage(dynamiteImg2, this.x, this.y);
+        }
+
+        move() {
+            this.x = Apple.getRandomNumber(0, canvas.width - 1);
+            this.y = Apple.getRandomNumber(0, canvas.height - 1);
+            if (apple.x !== this.x && apple.y !== this.y) {
+                if (dynamite.x !== this.x && dynamite.y !== this.y) { this.draw(); }
+            }
+            else {
+                this.x = Apple.getRandomNumber(0, canvas.width - 1);
+                this.y = Apple.getRandomNumber(0, canvas.height - 1);
+                this.draw()
+            }
+        }
+    }
+
 
     function gameLoop() {
         context.clearRect(0, 0, canvas.width, canvas.height);
         apple.draw();
         dynamite.draw();
+        dynamite2.draw();
         snake.move();
         context.font = 'bold 32px Arial';
         context.fillStyle = '#ff0000';
         context.fillText(`Score ${score}`, canvas.width - 160, 40);
         if (!gameOver) {
-            setTimeout(gameLoop, speed);
+            timeout = setTimeout(gameLoop, speed);
         } else {
             crashSound.currentTime = 0;
             crashSound.play();
             context.font = 'bold 32px Arial';
             context.fillStyle = '#000000';
-            context.fillText(`GAME OVER!!!`, (canvas.width / 2) - 80, (canvas.height / 2) - 16);
+            context.fillText(`GAME OVER!!!`, (canvas.width / 2) - 100, (canvas.height / 2) - 16);
         }
     }
     function restart() {
@@ -164,14 +199,13 @@
         score = 0;
         speed = 450;
         gameOver = false;
+        clearTimeout(timeout);
         direction = 'ArrowRight'
-        setTimeout(gameLoop, speed);
+        gameLoop();
     }
 
     const restartBtn = document.querySelector('#restart');
     restartBtn.addEventListener("click", restart);
-
-
 
     let direction = 'ArrowRight';
     document.addEventListener('keydown', e => {
@@ -208,6 +242,7 @@
         });
     }
 
+    let timeout
     let snake;
     let apple;
     let dynamite;
@@ -215,15 +250,19 @@
     let appleImg;
     let dynamiteImg;
     let snakeBody
+    let dynamite2;
+    let dynamiteImg2;
     try {
         const sp = loadImg('images/snakehead.png');
         const ap = loadImg('images/redapple.png');
         const dp = loadImg('images/dynamite.png');
         const sb = loadImg('images/snakebody.png');
-        [snakeHead, appleImg, dynamiteImg, snakeBody] = await Promise.all([sp, ap, dp, sb]);
+        const d2 = loadImg('images/dynamite2.png');
+        [snakeHead, appleImg, dynamiteImg, snakeBody, dynamiteImg2] = await Promise.all([sp, ap, dp, sb, d2]);
         snake = new Snake();
         apple = new Apple();
         dynamite = new Dynamite();
+        dynamite2 = new Dynamite2()
         setTimeout(gameLoop, speed);
     } catch (e) {
         console.error(e);
